@@ -9,7 +9,7 @@ def dir_walker(directory):
             #print(os.path.join(root, name))
             filecount += 1
             if filecount % 100 == 0:
-                print(filecount)
+                print("total file count " + str(filecount))
             yield os.path.join(root, name)
         # for name in dirs:
         #     print(os.path.join(root, name))
@@ -21,6 +21,8 @@ def check_excel(filename):
     for f in dir_walker("/Users/vincentdavis/Downloads"):
     check_excel(f)
     '''
+    # TODO check is file is a temparary, i.e. file starts with ~$ for example
+    # Z:\Restored\Data\Academics\Irene\~$New Student Course Work Form- Tusi.xlsx
     if os.path.splitext(filename)[-1].lower() in (".xlsx", ".xls"):
         try:
             open_workbook(filename)
