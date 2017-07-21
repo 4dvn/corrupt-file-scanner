@@ -17,7 +17,7 @@ def check_excel(filename):
     for f in dir_walker("/Users/vincentdavis/Downloads"):
     check_excel(f)
     '''
-    if os.path.splitext(filename)[-1]== ".XLSX":
+    if os.path.splitext(filename)[-1].lower()== ".xlsx":
         try:
             open_workbook(filename)
         except XLRDError:
