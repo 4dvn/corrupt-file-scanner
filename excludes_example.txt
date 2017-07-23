@@ -1,0 +1,3 @@
+*/tmp/*.pdf
+*/f1.png
+/home/ali/test/test1.jpeg
