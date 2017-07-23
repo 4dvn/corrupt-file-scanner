@@ -4,7 +4,7 @@ from PIL import Image
 from docx import Document
 from xlrd import open_workbook, XLRDError
 from PyPDF2 import PdfFileReader
-from PyPDF2.utils import PdfReadError
+from PyPDF2.utils import PdfReadError, PdfReadWarning
 
 
 class FileCorruptBaseException(Exception):
@@ -77,6 +77,9 @@ def pdf_check(filepath, **kwargs):
         with open(filepath, 'rb') as f:
             PdfFileReader(f)
     except (PdfReadError, TypeError):
+        return False
+    except PdfReadWarning:
+        print("PdfReadWarning: \n" + filepath)
         return False
     return True
 
