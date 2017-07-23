@@ -36,7 +36,9 @@ def is_exclude(filepath, exclude_list):
     return False
 
 
-def scan(dirpath, exclude_file=None, output_file=None):
+def scan(dirpath, exclude_file=None, output_file=None, no_verbose=False):
+    global verbose
+    verbose = not no_verbose
     total_scan = 0
     files_status = {}
     unknown_scan = 0
@@ -84,9 +86,9 @@ def scan(dirpath, exclude_file=None, output_file=None):
                 total_invalid += 1
                 print_v('[INVALID]')
                 invalid_files.setdefault(fc.name, []).append(f)
-    print_f('##########################################################')
-    print_f('#                      Finished!                         #')
-    print_f('##########################################################')
+    print_v('##########################################################')
+    print_v('#                      Finished!                         #')
+    print_v('##########################################################')
     print_f('====================== Summary: ==========================')
     print_f('-- Total files scanned: {}'.format(total_scan))
     print_f('-- Total not supported files: {}'.format(unknown_scan))
@@ -98,10 +100,10 @@ def scan(dirpath, exclude_file=None, output_file=None):
         output_file = open(output_file, 'w')
     invalid_files_count = sum(len(f) for f in invalid_files.values())
     if len(invalid_files) > 0:
-        print_v('.... List of invalid files: ({} files) ....'.format(invalid_files_count), file=output_file)
+        print_f('.... List of invalid files: ({} files) ....'.format(invalid_files_count), file=output_file)
         for n, files in invalid_files.items():
             for f in files:
-                print_v(f, file=output_file)
+                print_f(f, file=output_file)
     output_file and output_file.close()
 
 
@@ -115,10 +117,7 @@ def main():
     parser.add_argument('--noverbose', dest='no_verbose', action='store_true', help='verbose the steps')
 
     args = parser.parse_args()
-    if args.no_verbose:
-        verbose = False
-
-    scan(args.dirpath, args.exclude_file, args.outpath)
+    scan(args.dirpath, args.exclude_file, args.outpath, args.no_verbose)
 
 
 if __name__ == '__main__':
