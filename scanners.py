@@ -16,6 +16,11 @@ def print_v(*args, **kwargs):
         return
     print(*args, **kwargs, flush=True)
 
+tracking = True
+def track(data):
+    # expects a dict
+    db.insert(data)
+
 
 def print_f(*args, **kwargs):
     kwargs['force'] = True
@@ -36,15 +41,22 @@ def is_exclude(filepath, exclude_list):
     return False
 
 
-def scan(dirpath, exclude_file=None, output_file=None, no_verbose=False):
+def scan(dirpath, exclude_file=None, output_file=None, no_verbose=False, db_path=None, no_tracking=False):
     global verbose
     verbose = not no_verbose
+    global tracking
+    tracking = no_tracking
     total_scan = 0
     files_status = {}
     unknown_scan = 0
     invalid_files = {}
     total_invalid = 0
     exclude_list = []
+    if db_path:
+        # lets track files
+        from tinydb import TinyDB, Query
+        global db
+        db = TinyDB(db_path)
     if exclude_file:
         if not os.path.exists(exclude_file):
             print_f('Not exists exclude file: [{}]'.format(exclude_file))
@@ -63,6 +75,7 @@ def scan(dirpath, exclude_file=None, output_file=None, no_verbose=False):
         for f in files:
             if is_exclude(f, exclude_list):
                 print_v('!!! excluded file: [{}]'.format(f))
+                track({'file': f, 'status': 'exclude'})
                 continue
             total_scan += 1
             if total_scan % 1000 == 0:
@@ -76,15 +89,17 @@ def scan(dirpath, exclude_file=None, output_file=None, no_verbose=False):
             except NotSupportedFormat:
                 print_v('[NOT SUPPORTED]')
                 unknown_scan += 1
+                track({'file': f, 'status': 'not_supported'})
                 continue
             fs = files_status.setdefault(fc.name, [0, 0])
             is_valid = False
             try:
                 is_valid = fc.is_valid()
+                track({'file': f, 'status': 'valid'})
                 print_v('[VALID]' if is_valid else '[INVALID]')
             except Exception as e:
                 print_v('[INVALID] !!! Unexpected exception in validity check! [{}]'.format(e))
-
+                track({'file': f, 'status': 'invalid'})
             if is_valid:
                 fs[0] += 1
             else:
