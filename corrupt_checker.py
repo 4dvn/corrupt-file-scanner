@@ -1,4 +1,5 @@
 import os
+import zipfile
 
 from PIL import Image
 from docx import Document
@@ -90,6 +91,15 @@ def image_check(filepath, **kwargs):
     try:
         with Image.open(filepath) as im:
             im.verify()
+    except (IOError, SyntaxError):
+        return False
+    return True
+
+@register_handler(name='zip', formats=['zip'])
+def zip_check(filepath, **kwargs):
+    try:
+        with zipfile.ZipFile(filepath) as z:
+            z.testzip()
     except (IOError, SyntaxError):
         return False
     return True
