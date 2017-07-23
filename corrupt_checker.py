@@ -79,6 +79,7 @@ def pdf_check(filepath, **kwargs):
     except (PdfReadError, TypeError):
         return False
     except PdfReadWarning:
+        # TODO print the file path for this warning
         print("PdfReadWarning: \n" + filepath)
         return False
     return True
