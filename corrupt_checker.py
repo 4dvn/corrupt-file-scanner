@@ -102,4 +102,5 @@ def zip_check(filepath, **kwargs):
             z.testzip()
     except (IOError, SyntaxError):
         return False
+    # TODO exception zipfile.BadZipFile
     return True
