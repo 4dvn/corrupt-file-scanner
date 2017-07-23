@@ -1,6 +1,10 @@
 import os
+
+from PIL import Image
 from docx import Document
 from xlrd import open_workbook, XLRDError
+from PyPDF2 import PdfFileReader
+from PyPDF2.utils import PdfReadError
 
 
 class FileCorruptBaseException(Exception):
@@ -13,20 +17,18 @@ class NotSupportedFormat(FileCorruptBaseException):
 
 def register_handler(name, formats):
     def decorator(func):
-        FileCorruptChecker.handlers[name] = func
         for fmt in formats:
-            FileCorruptChecker.formats_map[fmt.lower()] = name
+            FileCorruptChecker.handlers[fmt.lower()] = {'func': func, 'name': name}
         return func
     return decorator
 
 
 class FileCorruptChecker(object):
     handlers = {}
-    formats_map = {}
 
     def __init__(self, filepath):
         ext = os.path.splitext(filepath)[-1].lstrip('.').lower()
-        if ext not in self.formats_map:
+        if ext not in self.handlers:
             raise NotSupportedFormat('not supported [{}] format'.format(ext))
         self._filepath = filepath
         self._format = ext
@@ -41,10 +43,10 @@ class FileCorruptChecker(object):
 
     @property
     def name(self):
-        return self.formats_map[self.format]
+        return self.handlers[self.format]['name']
 
     def is_valid(self, **kwargs):
-        check_handler = self.handlers[self.name]
+        check_handler = self.handlers[self.format]['func']
         return check_handler(self.filepath, **kwargs)
 
     def __str__(self):
@@ -65,5 +67,25 @@ def word_check(filepath, **kwargs):
     try:
         Document(filepath)
     except ValueError:
+        return False
+    return True
+
+
+@register_handler(name='pdf', formats=['pdf'])
+def pdf_check(filepath, **kwargs):
+    try:
+        with open(filepath, 'rb') as f:
+            PdfFileReader(f)
+    except (PdfReadError, TypeError):
+        return False
+    return True
+
+
+@register_handler(name='image', formats=['jpg', 'bmp', 'gif', 'jpeg', 'png', 'ico'])
+def image_check(filepath, **kwargs):
+    try:
+        with Image.open(filepath) as im:
+            im.verify()
+    except (IOError, SyntaxError):
         return False
     return True

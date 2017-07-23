@@ -10,4 +10,5 @@ $ source env/bin/activate
 
 $ pip install -r requirements.txt
 
-$ python scanners.py -d DIR_PATH
+$ python scanners.py DIR_PATH1 [DIR_PATH2] ...
+
