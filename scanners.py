@@ -78,14 +78,20 @@ def scan(dirpath, exclude_file=None, output_file=None, no_verbose=False):
                 unknown_scan += 1
                 continue
             fs = files_status.setdefault(fc.name, [0, 0])
-            if fc.is_valid():
+            is_valid = False
+            try:
+                is_valid = fc.is_valid()
+                print_v('[VALID]' if is_valid else '[INVALID]')
+            except Exception as e:
+                print_v('[INVALID] !!! Unexpected exception in validity check! [{}]'.format(e))
+
+            if is_valid:
                 fs[0] += 1
-                print_v('[VALID]')
             else:
                 fs[1] += 1
                 total_invalid += 1
-                print_v('[INVALID]')
                 invalid_files.setdefault(fc.name, []).append(f)
+
     print_v('##########################################################')
     print_v('#                      Finished!                         #')
     print_v('##########################################################')
@@ -109,7 +115,7 @@ def scan(dirpath, exclude_file=None, output_file=None, no_verbose=False):
 
 def main():
     global verbose
-    parser = argparse.ArgumentParser(description='Twitterypt CLI.')
+    parser = argparse.ArgumentParser(description='Corrupt file scanner')
     parser.add_argument('dirpath', type=str, nargs='+', help='directory path to scan')
     parser.add_argument('-x', '--exclude-file', dest='exclude_file', action='store',
                         help='file contains list of exclude files pattern')
