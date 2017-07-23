@@ -36,20 +36,20 @@ def is_exclude(filepath, exclude_list):
     return False
 
 
-def scan(args):
+def scan(dirpath, exclude_file=None, output_file=None):
     total_scan = 0
     files_status = {}
     unknown_scan = 0
     invalid_files = {}
     total_invalid = 0
     exclude_list = []
-    if args.exclude_file:
-        if not os.path.exists(args.exclude_file):
-            print_f('Not exists exclude file: [{}]'.format(args.exclude_file))
+    if exclude_file:
+        if not os.path.exists(exclude_file):
+            print_f('Not exists exclude file: [{}]'.format(exclude_file))
             sys.exit(1)
-        with open(args.exclude_file, 'r') as xf:
+        with open(exclude_file, 'r') as xf:
             exclude_list = [l.strip() for l in xf.readlines() if l.strip()]
-    for directory in args.dirpath:
+    for directory in dirpath:
         directory = os.path.abspath(directory)
         if not os.path.exists(directory):
             print_f('Not exists path: [{}]'.format(directory))
@@ -94,7 +94,6 @@ def scan(args):
     for n, fs in files_status.items():
         print_f('---- {} ==> VALID: {}, INVALID: {}'.format(n, fs[0], fs[1]))
     print_f('==========================================================')
-    output_file = args.outpath
     if output_file:
         output_file = open(output_file, 'w')
     invalid_files_count = sum(len(f) for f in invalid_files.values())
@@ -119,7 +118,7 @@ def main():
     if args.no_verbose:
         verbose = False
 
-    scan(args)
+    scan(args.dirpath, args.exclude_file, args.outpath)
 
 
 if __name__ == '__main__':
