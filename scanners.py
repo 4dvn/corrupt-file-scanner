@@ -6,6 +6,8 @@ import re
 import sys
 import traceback
 
+import xxhash
+
 from corrupt_checker import FileCorruptChecker, NotSupportedFormat
 
 verbose = True
@@ -41,7 +43,7 @@ def is_exclude(filepath, exclude_list):
     return False
 
 
-def scan(dirpath, exclude_file=None, output_file=None, no_verbose=False, db_path=None, no_tracking=False):
+def scan(dirpath, exclude_file=None, output_file=None, no_verbose=False, db_path=None, no_tracking=False, get_hash=False):
     global verbose
     verbose = not no_verbose
     global tracking
@@ -75,7 +77,7 @@ def scan(dirpath, exclude_file=None, output_file=None, no_verbose=False, db_path
         for f in files:
             if is_exclude(f, exclude_list):
                 print_v('!!! excluded file: [{}]'.format(f))
-                track({'file': f, 'status': 'exclude'})
+                track({'file': f, 'status': 'exclude', 'xxhash': xxh})
                 continue
             total_scan += 1
             if total_scan % 1000 == 0:
@@ -84,18 +86,23 @@ def scan(dirpath, exclude_file=None, output_file=None, no_verbose=False, db_path
                                                                                         unknown_scan))
                 print_f(80 * '=')
             print_v('+++ Scanning [{}] ==> '.format(f), end='')
+            if get_hash:
+                with open(f, 'rb') as gh:
+                    xxh = xxhash.xxh64(gh.read(4096 * 1024)).hexdigest()
+            else:
+                xxh = None
             try:
                 fc = FileCorruptChecker(f)
             except NotSupportedFormat:
                 print_v('[NOT SUPPORTED]')
                 unknown_scan += 1
-                track({'file': f, 'status': 'not_supported'})
+                track({'file': f, 'status': 'not_supported', 'xxhash': xxh})
                 continue
             fs = files_status.setdefault(fc.name, [0, 0])
             is_valid = False
             try:
                 is_valid = fc.is_valid()
-                track({'file': f, 'status': 'valid'})
+                track({'file': f, 'status': 'valid', 'xxhash': xxh})
                 print_v('[VALID]' if is_valid else '[INVALID]')
             except Exception as e:
                 print_v('[INVALID] !!! Unexpected exception in validity check! [{}]'.format(e))
