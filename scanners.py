@@ -1,16 +1,20 @@
-import argparse
-import fnmatch
 import os
 import re
-
 import sys
-import traceback
-
 import xxhash
+import fnmatch
+import argparse
+import traceback
+from tinydb import TinyDB
 
 from corrupt_checker import FileCorruptChecker, NotSupportedFormat
 
+db = None
 verbose = True
+tracking = True
+default_db_path = 'tracking.json'
+
+
 def print_v(*args, **kwargs):
     force = kwargs.pop('force', False)
     file = kwargs.get('file')
@@ -18,10 +22,11 @@ def print_v(*args, **kwargs):
         return
     print(*args, **kwargs, flush=True)
 
-tracking = True
+
 def track(data):
     # expects a dict
-    db.insert(data)
+    if db is not None:
+        db.insert(data)
 
 
 def print_f(*args, **kwargs):
@@ -43,21 +48,22 @@ def is_exclude(filepath, exclude_list):
     return False
 
 
-def scan(dirpath, exclude_file=None, output_file=None, no_verbose=False, db_path=None, no_tracking=False, get_hash=False):
+def scan(dirpath, exclude_file=None, output_file=None, no_verbose=False, db_path=None, no_tracking=False,
+         get_hash=False):
+    global db
     global verbose
-    verbose = not no_verbose
     global tracking
-    tracking = no_tracking
+    verbose = not no_verbose
+    tracking = not no_tracking
     total_scan = 0
     files_status = {}
     unknown_scan = 0
     invalid_files = {}
     total_invalid = 0
     exclude_list = []
-    if db_path:
+    if tracking:
         # lets track files
-        from tinydb import TinyDB, Query
-        global db
+        db_path = db_path or default_db_path
         db = TinyDB(db_path)
     if exclude_file:
         if not os.path.exists(exclude_file):
@@ -102,7 +108,7 @@ def scan(dirpath, exclude_file=None, output_file=None, no_verbose=False, db_path
             is_valid = False
             try:
                 is_valid = fc.is_valid()
-                track({'file': f, 'status': 'valid', 'xxhash': xxh})
+                track({'file': f, 'status': 'valid' if is_valid else 'invalid', 'xxhash': xxh})
                 print_v('[VALID]' if is_valid else '[INVALID]')
             except Exception as e:
                 print_v('[INVALID] !!! Unexpected exception in validity check! [{}]'.format(e))
@@ -143,9 +149,14 @@ def main():
                         help='file contains list of exclude files pattern')
     parser.add_argument('-o', '--out', dest='outpath', action='store', help='directory path to save invalid files path')
     parser.add_argument('--noverbose', dest='no_verbose', action='store_true', help='verbose the steps')
+    parser.add_argument('--notracking', dest='no_tracking', action='store_true', help='no track the files status in db')
+    parser.add_argument('--use-hashing', dest='use_hashing', action='store_true',
+                        help='a flag to use hashing in calculate file status')
+    parser.add_argument('--tracking-db', dest='tracking_db', action='store', help='db path to save the tracking status')
 
     args = parser.parse_args()
-    scan(args.dirpath, args.exclude_file, args.outpath, args.no_verbose)
+    scan(args.dirpath, exclude_file=args.exclude_file, output_file=args.outpath, no_verbose=args.no_verbose,
+         no_tracking=args.no_tracking, get_hash=args.use_hashing, db_path=args.tracking_db)
 
 
 if __name__ == '__main__':
