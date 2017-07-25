@@ -83,7 +83,7 @@ def scan(dirpath, exclude_file=None, output_file=None, no_verbose=False, db_path
         for f in files:
             if is_exclude(f, exclude_list):
                 print_v('!!! excluded file: [{}]'.format(f))
-                track({'file': f, 'status': 'exclude', 'xxhash': xxh})
+                track({'file': f, 'status': 'exclude', 'xxhash': None})
                 continue
             total_scan += 1
             if total_scan % 1000 == 0:

@@ -4,8 +4,7 @@ import zipfile
 from PIL import Image
 from docx import Document
 from xlrd import open_workbook, XLRDError
-from PyPDF2 import PdfFileReader
-from PyPDF2.utils import PdfReadError, PdfReadWarning
+from pdfrw import PdfReader, PdfParseError
 
 
 class FileCorruptBaseException(Exception):
@@ -75,13 +74,8 @@ def word_check(filepath, **kwargs):
 @register_handler(name='pdf', formats=['pdf'])
 def pdf_check(filepath, **kwargs):
     try:
-        with open(filepath, 'rb') as f:
-            PdfFileReader(f)
-    except (PdfReadError, TypeError):
-        return False
-    except PdfReadWarning:
-        # TODO print the file path for this warning
-        print("PdfReadWarning: \n" + filepath)
+        PdfReader(filepath)
+    except PdfParseError:
         return False
     return True
 
